@@ -6,16 +6,15 @@ import sys
 import json
 
 def get_color():
-    return random.choice(["#FF69B4", "#FF1493", "#FF4500", "#FF6347", "#00BFFF"])
+    return random.choice(["#FF69B4", "#FF1493", "#FF4500", "#FF6347", "#DB7093", "#00BFFF"])
 
 def get_access_token(config):
     url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={config['app_id']}&secret={config['app_secret']}"
-    res = get(url).json()
-    token = res.get('access_token')
-    if not token:
-        print(f"Token获取失败，请检查appid和secret: {res}")
+    try:
+        res = get(url).json()
+        return res.get('access_token')
+    except:
         sys.exit(1)
-    return token
 
 def get_weather(config):
     headers = {'User-Agent': 'Mozilla/5.0'}
@@ -27,7 +26,7 @@ def get_weather(config):
         res = get(w_url, headers=headers).json()["now"]
         return res["text"], res["temp"] + "°C"
     except:
-        return "数据获取中", "N/A"
+        return "获取中", "N/A"
 
 def get_birthday_days(birthday_str, today):
     year = today.year
@@ -44,38 +43,35 @@ def get_birthday_days(birthday_str, today):
             if today > target: target = date(year + 1, m, d)
         return (target - today).days
     except:
-        return "计算中"
+        return None
 
 def send_message(to_user, token, config, weather_info):
     url = f"https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={token}"
     today = datetime.now().date()
-    
-    # 核心数据计算
     love_date = datetime.strptime(config["love_date"], "%Y-%m-%d").date()
     love_days = (today - love_date).days
     
-    # 生日逻辑保底
-    try:
-        b1_days = get_birthday_days(config["birthday1"]["birthday"], today)
-        b1_text = f"今天{config['birthday1']['name']}生日!🎂" if b1_days == 0 else f"{config['birthday1']['name']}生日倒计时 {b1_days}天"
-    except:
-        b1_text = "生日信息加载中"
+    # --- 合并生日逻辑 ---
+    birthday_list = []
+    for i in range(1, 10):
+        key = f"birthday{i}"
+        if key in config:
+            v = config[key]
+            diff = get_birthday_days(v["birthday"], today)
+            if diff is not None:
+                msg = f"{v['name']}生日快乐!🎂" if diff == 0 else f"{v['name']}倒计时{diff}天"
+                birthday_list.append(msg)
+    
+    # 用换行符拼接，如果没人生日就给个保底
+    tips_msg = "\n".join(birthday_list) if birthday_list else "今天也是爱你的一天！"
 
-    try:
-        b2_days = get_birthday_days(config["birthday2"]["birthday"], today)
-        b2_text = f"今天{config['birthday2']['name']}生日!🎂" if b2_days == 0 else f"{config['birthday2']['name']}生日倒计时 {b2_days}天"
-    except:
-        b2_text = "生日信息加载中"
-
-    # 显式构造发送数据（确保 Key 与模板 {{key.DATA}} 一一对应）
+    # --- 构造报文 ---
     data_packet = {
-        "date": {"value": f"{today.year}年{today.month}月{today.day}日", "color": get_color()},
         "love_day": {"value": str(love_days), "color": "#FF1493"},
         "region": {"value": str(config["region"]), "color": get_color()},
         "weather": {"value": str(weather_info[0]), "color": get_color()},
         "temp": {"value": str(weather_info[1]), "color": get_color()},
-        "birthday1": {"value": b1_text, "color": get_color()},
-        "birthday2": {"value": b2_text, "color": get_color()}
+        "tips": {"value": tips_msg, "color": get_color()} # 这里换了名字
     }
 
     body = {
@@ -84,18 +80,15 @@ def send_message(to_user, token, config, weather_info):
         "data": data_packet
     }
     
-    # 调试日志：非常重要
-    print(f"--- 正在向微信发送数据 ---")
+    # 打印日志
+    print(f"--- 准备发送 ---")
     print(json.dumps(body, ensure_ascii=False, indent=2))
-    
     res = post(url, json=body).json()
-    print(f"--- 微信返回结果: {res} ---")
+    print(f"--- 服务器反馈: {res} ---")
 
 if __name__ == "__main__":
     with open("config.txt", "r", encoding="utf-8") as f:
-        # 去除可能的空行和注释
-        content = "".join([line.split('#')[0] for line in f.readlines() if line.strip()])
-        config = eval(content)
+        config = eval("".join([line.split('#')[0] for line in f.readlines() if line.strip()]))
 
     token = get_access_token(config)
     weather = get_weather(config)

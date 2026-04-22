@@ -1,7 +1,7 @@
 {
 "app_id": "wxe7dd04aadab8fa4c",
 "app_secret": "39a47cdc7c89d2f5945a1175f76af151",
-"template_id": "0ZWQYs-rbdJsgpgi8Z0Q9vT5vUXJ_9lY9xKyk_zWqsE",
+"template_id": "bW15IcOWbgUMAeF0WmWbzbh6KlxmA1EKqC3_Wj7hdmo",
 "user": [
     "ozAnm2wUXID-mkEs8j9w12IGtNr4", 
     "ozAnm22mGa8Is3Wql4Gz_Osa2B_c"
@@ -10,7 +10,5 @@
 "region": "合肥市",
 "love_date": "2026-02-24",
 "birthday1": {"name": "乖乖", "birthday": "2004-10-23"},
-"birthday2": {"name": "张张", "birthday": "2001-10-01"},
-"note_ch": "",
-"note_en": ""
+"birthday2": {"name": "张张", "birthday": "2001-10-01"}
 }

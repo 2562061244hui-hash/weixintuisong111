@@ -12,10 +12,10 @@
     
 步骤:
       - name: 签出代码
-用途: actions/checkout@v2
+用途: aactions/checkout@v2
 
-      - name: 设置Python 3.9
-        uses: actions/setup-python@v2
+      - 名称: 设置Python 3.9
+使用: actions/setup-python@v2
 与:
 python版本: '3.9.1'
 
@@ -26,7 +26,7 @@ python版本: '3.9.1'
       - name: 安装依赖
 运行: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+如果 [ -f requirements.txt ]; 则 pip 安装 -r requirements.txt; fi
 
       - 名称: 运行Python脚本
 运行: |

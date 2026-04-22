@@ -1,28 +1,33 @@
-name: weixin
-on:
-  workflow_dispatch:
-  schedule: 
-    # 代表国际标准时间23点0分，北京时间需要+8小时，代表北京时间上午7点运行
-→ 每天23:00运行
-jobs:
-#将工作流程中运行的所有作业组合在一起
-构建:
-  #定义名为 build 的作业。 子键将定义作业的属性 
-运行于: ubuntu-latest
-步骤:
-      - uses: actions/checkout@v2
+名称: 微信
+
+启用:
+工作流调度:
+计划:
+    # 每天北京时间早上 7:00 运行 (UTC 23:00)
+    - cron: '0 23 * * *'
+
+工作:
+  build:
+    runs-on: ubuntu-latest
     
-      - 名称: 设置Python 3.9
-使用: actions/setup-python@v2
+步骤:
+      - name: 签出代码
+用途: actions/checkout@v2
+
+      - name: 设置Python 3.9
+        uses: actions/setup-python@v2
 与:
-python版本: 3.9.1
+python版本: '3.9.1'
+
       - 名称: 设置时区
 运行: |
-          cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
-      - 名称: 安装pip包
+          sudo cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+
+      - name: 安装依赖
 运行: |
           python -m pip install --upgrade pip
-          pip3 install -r requirements.txt
-      - 名称: 微信
+          pip install -r requirements.txt
+
+      - 名称: 运行Python脚本
 运行: |
-          python3 main.py
+          python main.py

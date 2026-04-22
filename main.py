@@ -1,5 +1,4 @@
 import random
-from time import localtime
 from requests import get, post
 from datetime import datetime, date
 from zhdate import ZhDate
@@ -14,7 +13,8 @@ def get_access_token(config):
     app_secret = config["app_secret"]
     url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={app_id}&secret={app_secret}"
     try:
-        return get(url).json()['access_token']
+        res = get(url).json()
+        return res['access_token']
     except Exception as e:
         print(f"Token Error: {e}")
         sys.exit(1)
@@ -59,11 +59,10 @@ def send_message(to_user, token, config, weather_info, note):
     today = datetime.now().date()
     week_list = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
     week = week_list[datetime.now().isoweekday() % 7]
-    
     love_date = datetime.strptime(config["love_date"], "%Y-%m-%d").date()
     love_days = (today - love_date).days
 
-    # 合并所有生日信息
+    # 重要：合并所有生日提醒为一个字符串
     birthday_msg = ""
     for k, v in config.items():
         if k.startswith("birthday"):
@@ -94,6 +93,7 @@ def send_message(to_user, token, config, weather_info, note):
 if __name__ == "__main__":
     conf_path = "config.txt"
     with open(conf_path, "r", encoding="utf-8") as f:
+        # 过滤注释读取
         content = "".join([line.split('#')[0] for line in f.readlines()])
         config = eval(content)
 

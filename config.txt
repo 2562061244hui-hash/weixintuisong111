@@ -1,16 +1,16 @@
 {
 "app_id": "wxe7dd04aadab8fa4c",
 "app_secret": "39a47cdc7c89d2f5945a1175f76af151",
-"template_id": "MYWfSRSv-6WPWHa1M2Y5LzaO3AaDaOzabeFrQfokKUY",
+"template_id": "8OKjWV11eNW2Cvs4VMtL2GYm-V6XNZ67neOPRmjHmgU",
 "user": [
     "ozAnm2wUXID-mkEs8j9w12IGtNr4", 
     "ozAnm22mGa8Is3Wql4Gz_Osa2B_c"
 ],
 "weather_key": "4b77d3f70c634d80acb6f85364d96fa7",
 "region": "合肥市",
+"love_date": "2026-02-24",
 "birthday1": {"name": "乖乖", "birthday": "2004-10-23"},
 "birthday2": {"name": "张张", "birthday": "2001-10-01"},
-"love_date": "2026-02-24",
 "note_ch": "",
 "note_en": ""
 }

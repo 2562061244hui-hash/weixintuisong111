@@ -2,7 +2,7 @@
   "app_id": "wxe7dd04aadab8fa4c",
   "app_secret": "39a47cdc7c89d2f5945a1175f76af151",
   "template_id": "war3r54tVjUZGmgyiEV5ErteMSeRMOK8tLCapKrQHlw",
-  "user": ["ozAnm2wUXID-mkEs8j9w12IGtNr4"],
+  "user": ["ozAnm2wUXID-mkEs8j9w12IGtNr4"],["ozAnm22mGa8Is3Wql4Gz_Osa2B_c"],
   "weather_key": "4b77d3f70c634d80acb6f85364d96fa7",
   "region": "合肥市",
   "birthday1": {"name": "乖乖", "birthday": "2004-10-23"},

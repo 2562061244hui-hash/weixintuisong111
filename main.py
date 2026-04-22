@@ -3,105 +3,74 @@ from requests import get, post
 from datetime import datetime, date
 from zhdate import ZhDate
 import sys
-import os
 
 def get_color():
-    return random.choice(["#FFB6C1", "#87CEFA", "#98FB98", "#DDA0DD", "#FFD700", "#FF6347", "#00CED1"])
+    return random.choice(["#FF69B4", "#1E90FF", "#32CD32", "#FFA500", "#9370DB"])
 
 def get_access_token(config):
-    app_id = config["app_id"]
-    app_secret = config["app_secret"]
-    url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={app_id}&secret={app_secret}"
-    try:
-        res = get(url).json()
-        return res['access_token']
-    except:
-        sys.exit(1)
+    url = f"https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid={config['app_id']}&secret={config['app_secret']}"
+    return get(url).json().get('access_token')
 
 def get_weather(config):
     headers = {'User-Agent': 'Mozilla/5.0'}
-    key = config["weather_key"]
-    region = config["region"]
+    key, region = config["weather_key"], config["region"]
     try:
-        region_url = f"https://geoapi.qweather.com/v2/city/lookup?location={region}&key={key}"
-        city_data = get(region_url, headers=headers).json()
-        if city_data["code"] != "200": return "未知", "N/A", "无"
-        location_id = city_data["location"][0]["id"]
-        weather_url = f"https://devapi.qweather.com/v7/weather/now?location={location_id}&key={key}"
-        res = get(weather_url, headers=headers).json()
-        return res["now"]["text"], res["now"]["temp"] + "°C", res["now"]["windDir"]
-    except:
-        return "查询失败", "N/A", "无"
+        r_url = f"https://geoapi.qweather.com/v2/city/lookup?location={region}&key={key}"
+        city_id = get(r_url, headers=headers).json()["location"][0]["id"]
+        w_url = f"https://devapi.qweather.com/v7/weather/now?location={city_id}&key={key}"
+        res = get(w_url, headers=headers).json()["now"]
+        return res["text"], res["temp"] + "°"
+    except: return "未知", "N/A"
 
-def get_birthday_days(birthday_str, today):
+def get_birthday(b_str, today):
     year = today.year
-    is_lunar = birthday_str.startswith("r")
-    clean_date = birthday_str.replace("r", "")
+    is_lunar = b_str.startswith("r")
+    clean_date = b_str.replace("r", "")
     try:
-        parts = clean_date.split("-")
-        month, day = int(parts[1]), int(parts[2])
-        if is_lunar:
-            target = ZhDate(year, month, day).to_datetime().date()
-            if today > target: target = ZhDate(year + 1, month, day).to_datetime().date()
-        else:
-            target = date(year, month, day)
-            if today > target: target = date(year + 1, month, day)
+        m, d = map(int, clean_date.split("-")[1:3])
+        target = ZhDate(year, m, d).to_datetime().date() if is_lunar else date(year, m, d)
+        if today > target:
+            target = ZhDate(year + 1, m, d).to_datetime().date() if is_lunar else date(year + 1, m, d)
         return (target - today).days
-    except:
-        return None
+    except: return None
 
-def send_message(to_user, token, config, weather_info, note):
-    url = f"https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={token}"
+def send_message(to_user, token, config, weather_info):
     today = datetime.now().date()
-    week_list = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"]
-    week = week_list[datetime.now().isoweekday() % 7]
-    love_date = datetime.strptime(config["love_date"], "%Y-%m-%d").date()
-    love_days = (today - love_date).days
-
-    # 聚合生日逻辑 + 空值保底
-    birthday_msg = ""
+    love_days = (today - datetime.strptime(config["love_date"], "%Y-%m-%d").date()).days
+    
+    # 极简生日拼接
+    memo_list = []
     for k, v in config.items():
         if k.startswith("birthday"):
-            diff = get_birthday_days(v["birthday"], today)
+            diff = get_birthday(v["birthday"], today)
             if diff is not None:
-                msg = f"今天{v['name']}生日啦！🎂" if diff == 0 else f"距离{v['name']}生日还有{diff}天"
-                birthday_msg += msg + "\n"
-    
-    # 如果没有生日提醒，填入保底文字，防止截断
-    if not birthday_msg.strip():
-        birthday_msg = "今天也要记得想我呀！💌"
+                memo_list.append(f"{v['name']}{'诞辰!' if diff==0 else '生还有'+str(diff)+'天'}")
+    memo_text = " / ".join(memo_list) if memo_list else "今天也要开心呀 ❤️"
+
+    # 极简金句
+    try:
+        note = config.get("note_ch") or get("http://open.iciba.com/dsapi/").json()["note"]
+    except: note = "每天都要想我哦！"
 
     body = {
         "touser": to_user,
         "template_id": config["template_id"],
-        "url": "https://www.qweather.com/",
         "data": {
-            "date": {"value": f"{today} {week}", "color": get_color()},
+            "date": {"value": f"{today.month}-{today.day}", "color": get_color()},
+            "love_day": {"value": str(love_days), "color": "#FF1493"},
             "region": {"value": config["region"], "color": get_color()},
             "weather": {"value": weather_info[0], "color": get_color()},
             "temp": {"value": weather_info[1], "color": get_color()},
-            "wind_dir": {"value": weather_info[2], "color": get_color()},
-            "love_day": {"value": str(love_days), "color": "#FF1493"},
-            "memo": {"value": birthday_msg.strip(), "color": get_color()},
-            "note_ch": {"value": note[0], "color": get_color()},
-            "note_en": {"value": note[1], "color": get_color()}
+            "memo": {"value": memo_text, "color": get_color()},
+            "note": {"value": note[:40], "color": get_color()} # 限制40字，防止截断
         }
     }
-    post(url, json=body)
+    post(f"https://api.weixin.qq.com/cgi-bin/message/template/send?access_token={token}", json=body)
 
 if __name__ == "__main__":
     with open("config.txt", "r", encoding="utf-8") as f:
-        content = "".join([line.split('#')[0] for line in f.readlines()])
-        config = eval(content)
-
+        config = eval("".join([line.split('#')[0] for line in f.readlines()]))
     token = get_access_token(config)
     weather = get_weather(config)
-    
-    try:
-        cb = get("http://open.iciba.com/dsapi/").json()
-        note = (config.get("note_ch") or cb["note"], config.get("note_en") or cb["content"])
-    except:
-        note = ("祝乖乖今天也开心！", "Have a nice day!")
-
     for user in config["user"]:
-        send_message(user, token, config, weather, note)
+        send_message(user, token, config, weather)

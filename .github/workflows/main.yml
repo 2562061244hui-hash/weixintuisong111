@@ -1,33 +1,33 @@
-name: weixin
+名称: 微信
 
-on:
-  workflow_dispatch:
-  schedule:
+启用:
+工作流调度:
+计划:
     # 每天北京时间早上 7:00 运行 (UTC 23:00)
     - cron: '0 23 * * *'
 
-jobs:
+工作:
   build:
     runs-on: ubuntu-latest
     
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+步骤:
+      - name: 签出代码
+用途: actions/checkout@v2
 
-      - name: Set up Python 3.9
+      - 名称: 设置Python 3.9
         uses: actions/setup-python@v2
-        with:
-          python-version: '3.9.1'
+与:
+python版本: '3.9'
 
-      - name: Set Timezone
-        run: |
+      - 名称: 设置时区
+运行: |
           sudo cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 
-      - name: Install dependencies
-        run: |
+      - name: 安装依赖
+运行: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+如果 [ -f requirements.txt ]; 则 pip 安装 -r requirements.txt; fi
 
-      - name: Run Python script
-        run: |
+      - 名称: 运行Python脚本
+运行: |
           python main.py
